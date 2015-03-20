@@ -6,7 +6,7 @@
     * { box-sizing: border-box; }
 
     label, input, output { display: block; }
-    input[type="text"], input[type="url"] { width: 400px; }
+    input[type="text"] { width: 400px; }
 
     label { margin: 2em 0; background-color: #efe; }
     output { font-family: monospace; }
@@ -14,25 +14,15 @@
     #output { margin-top: 2em; }
 </style>
 
+<p>This demo will search the first billion digits of PI for a substring you specify, and tell you the position at
+which it was found. It will do this without consuming a billion bytes of memory! And it won't even need to do text
+decoding and string comparison, as it will operate on the bytes directly.
+
 <form id="form">
     <label>
-        Enter a URL to do a streaming search on
-        <input type="url" id="url" list="urls">
-        <datalist id="urls">
-            <option value="https://streams.spec.whatwg.org/">
-            <option value="https://html.spec.whatwg.org/">
-            <option value="http://www.angio.net/pi/digits/pi1000000.txt">
-            <option value="http://stuff.mit.edu/afs/sipb/contrib/pi/pi-billion.txt">
-            <!-- TODO more, especially ones with a Content-Length -->
-        </datalist>
-
-        <p>(Large pages will demonstrate better. We use a CORS proxy.)
-    </label>
-
-    <label>
-        Enter a string to search for (bytes displayed below)
-        <input type="text" id="string">
-        <output id="bytes" for="string"></output>
+        Enter a substring to search for (bytes displayed below)
+        <input type="text" id="substring" pattern="[0-9]+" required>
+        <output id="bytes" for="substring"></output>
     </label>
 
     <input type="submit" value="Search!">
@@ -60,10 +50,10 @@
         }.bind(this));
     };
 
+    const PI_URL = 'http://stuff.mit.edu/afs/sipb/contrib/pi/pi-billion.txt';
 
-    const string = document.querySelector('#string');
+    const substring = document.querySelector('#substring');
     const bytes = document.querySelector('#bytes');
-    const url = document.querySelector('#url');
     const form = document.querySelector('#form');
 
     const output = document.querySelector('#output');
@@ -73,8 +63,8 @@
     const encoder = new TextEncoder();
 
     let bytesValue = new Uint8Array();
-    string.addEventListener('input', function () {
-        bytesValue = encoder.encode(string.value);
+    substring.addEventListener('input', function () {
+        bytesValue = encoder.encode(substring.value);
 
         const bytesAsStrings = Array.prototype.map.call(bytesValue, function (b) { return `0x${b.toString(16)}`; });
         bytes.value = Array.prototype.join.call(bytesAsStrings, ' ');
@@ -89,7 +79,7 @@
 
         progressText.textContent = 'Performing fetch...';
 
-        fetch(`https://cors-anywhere.herokuapp.com/${url.value}`).then(function (res) {
+        fetch(`https://cors-anywhere.herokuapp.com/${PI_URL}`).then(function (res) {
             soFar = 0;
             contentLength = res.headers.get('Content-Length');
             progress.max = contentLength;
