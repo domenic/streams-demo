@@ -40,7 +40,7 @@ which it was found. It will do this without consuming a billion bytes of memory!
 <p>Finally, once it finds the substring, it will cancel the stream, preventing further network usage! Canceling a fetch
 was not previously possible. (It is not yet possible to cancel before the headers arrive; see
 <a href="https://github.com/slightlyoff/ServiceWorker/issues/592">slightlyoff/ServiceWorker#592</a> and linked issues.)
-<small>Unfortunately our implementation has <a href="http://crbug.com/469286">a bug</a> where <code>reader.cancel()</code> does not work yet.</small>
+<small>Unfortunately our implementation has <a href="http://crbug.com/469154">a bug</a> where <code>reader.cancel()</code> does not work yet.</small>
 
 
 <form id="form">
@@ -160,8 +160,8 @@ was not previously possible. (It is not yet possible to cancel before the header
             if (found !== -1) {
                 progressText.textContent = `Found it! At position ${soFar - chunk.byteLength + found}.`;
 
-                // crbug.com/469290 : argument to .cancel() should be optional
-                // crbug.com/469286 : .cancel() doesn't actually stop the network I/O
+                // crbug.com/469154 : argument to .cancel() should be optional
+                // crbug.com/469154 : .cancel() doesn't actually stop the network I/O
                 return reader.cancel('Found it, no more data needed!');
             } else {
                 return pump(reader);
