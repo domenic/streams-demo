@@ -97,12 +97,36 @@ decoding and string comparison, as it will operate on the bytes directly.
                 progressText.textContent = `All done! (${soFar} bytes total)`;
                 return;
             }
-            console.log('chunk', result.value.byteLength);
 
-            soFar += result.value.byteLength;
+            const chunk = new Uint8Array(result.value); // should be Uint8Array already though, not ArrayBuffer
+
+            soFar += chunk.byteLength;
             updateProgress();
 
-            return pump(reader);
+            let found = -1;
+            for (let i = 0; i < chunk.length; ++i) {
+                if (chunk[i] === bytesValue[0]) {
+                    found = i;
+                    for (let j = 1; j < bytesValue.length; ++j) {
+                        if (chunk[i + j] !== bytesValue[j]) {
+                            found = -1;
+                            break;
+                        }
+                    }
+                }
+
+                if (found !== -1) {
+                    break;
+                }
+            }
+
+            if (found !== -1) {
+                progressText.textContent = `Found it! At position ${soFar - chunk.byteLength + found}.`;
+                return reader.cancel('Found it, no more data needed!'); // BUG: argument should be optional
+                // BUG: cancel doesn't actually do anything.
+            } else {
+                return pump(reader);
+            }
         });
     }
 
