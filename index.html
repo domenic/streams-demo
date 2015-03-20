@@ -1,27 +1,50 @@
 <!DOCTYPE html>
 
-<h1>Fetch + Streams Demo</h1>
+<title>Fetch + Streams Demo</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <style>
     * { box-sizing: border-box; }
 
-    label, input, output { display: block; }
-    input[type="text"] { width: 400px; }
+    html { font-family: Calibri, Helvetica, Arial; }
 
-    label { margin: 2em 0; background-color: #efe; }
-    output { font-family: monospace; }
+    h1 { text-align: center; }
+
+    form {
+        max-width: 500px;
+        margin: 0 auto;
+        text-align: center;
+    }
+
+    label, input, output { display: block; }
+    input[type="text"] { width: 100%; margin: 0.5em 0; }
+    input[type="submit"] { display: inline; }
+
+    label { margin: 2em auto; padding: 1em; background-color: #efe; }
+    output { font-family: monospace; margin: 0.5em 0; min-height: 30px; }
 
     #output { margin-top: 2em; }
 </style>
 
+<h1>Fetch + Streams Demo</h1>
+
 <p>This demo will search the first billion digits of PI for a substring you specify, and tell you the position at
-which it was found. It will do this without consuming a billion bytes of memory! And it won't even need to do text
-decoding and string comparison, as it will operate on the bytes directly.
+which it was found. It will do this without consuming a billion bytes of memory! That was impossible with XHR!
+
+<p>Furthermore, it won't even need to do text decoding and string comparison, as it will operate on the bytes directly.
+(XHR's pseudo-streaming mode, with an ever-growing <code>responseText</code> you could poll, was text-only.)
+
+<p>Finally, once it finds the substring, it will cancel the stream, preventing further network usage! Canceling a fetch
+was not previously possible. (It is not yet possible to cancel before the headers arrive; see
+<a href="https://github.com/slightlyoff/ServiceWorker/issues/592">slightlyoff/ServiceWorker#592</a> and linked issues.)
+<small>Unfortunately our implementation has a bug where <code>reader.cancel()</code> does not work yet.</small>
+
 
 <form id="form">
     <label>
         Enter a substring to search for (bytes displayed below)
-        <input type="text" id="substring" pattern="[0-9]+" required>
+        <input type="text" id="substring" pattern="[0-9]+" title="Enter only digits" required>
         <output id="bytes" for="substring"></output>
     </label>
 
@@ -37,7 +60,8 @@ decoding and string comparison, as it will operate on the bytes directly.
 (function () {
     'use strict';
 
-    // Polyfill until Canary updates
+    // TODO: When Canary updates to include http://src.chromium.org/viewvc/blink?view=revision&revision=192220,
+    // remove this "polyfill" and replace usage of .read2() below with .read()
     ReadableStreamReader.prototype.read2 = function () {
         return this.ready.then(function () {
             if (this.state === 'readable') {
@@ -98,7 +122,9 @@ decoding and string comparison, as it will operate on the bytes directly.
                 return;
             }
 
-            const chunk = new Uint8Array(result.value); // should be Uint8Array already though, not ArrayBuffer
+            // TODO: when Canary updates to include http://src.chromium.org/viewvc/blink?view=revision&revision=192238,
+            // remove the `new Uint8Array`, since `result.value` will already be a Uint8Array.
+            const chunk = new Uint8Array(result.value);
 
             soFar += chunk.byteLength;
             updateProgress();
@@ -122,8 +148,10 @@ decoding and string comparison, as it will operate on the bytes directly.
 
             if (found !== -1) {
                 progressText.textContent = `Found it! At position ${soFar - chunk.byteLength + found}.`;
-                return reader.cancel('Found it, no more data needed!'); // BUG: argument should be optional
-                // BUG: cancel doesn't actually do anything.
+
+                // BLINK BUG: argument to .cancel() should be optional
+                // BLINK BUG: .cancel() doesn't actually stop the network I/O
+                return reader.cancel('Found it, no more data needed!');
             } else {
                 return pump(reader);
             }
