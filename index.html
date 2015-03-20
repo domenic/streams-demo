@@ -25,6 +25,8 @@
     output { font-family: monospace; margin: 0.5em 0; min-height: 30px; }
 
     #output { margin-top: 2em; }
+
+    footer { font-size: smaller; border-top: 1px solid #3C790A; text-align: center; margin-top: 2em; }
 </style>
 
 <h1>Fetch + Streams Demo</h1>
@@ -55,6 +57,12 @@ was not previously possible. (It is not yet possible to cancel before the header
         <output id="progress-text"></output>
     </fieldset>
 </form>
+
+<footer>
+    <p><a href="https://github.com/domenic/streams-demo/blob/gh-pages/index.html">Source code on GitHub</a></p>
+
+    <a href="https://streams.spec.whatwg.org/"><img alt="Streams Logo" src="https://resources.whatwg.org/logo-streams.svg" height="30"></a>
+</footer>
 
 <script>
 (function () {
