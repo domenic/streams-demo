@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+
+<h1>Fetch + Streams Demo</h1>
+
+<style>
+    * { box-sizing: border-box; }
+
+    label, input, output { display: block; }
+    input[type="text"], input[type="url"] { width: 400px; }
+
+    label { margin: 2em 0; background-color: #efe; }
+    output { font-family: monospace; }
+
+    #output { margin-top: 2em; }
+</style>
+
+<form id="form">
+    <label>
+        Enter a URL to do a streaming search on
+        <input type="url" id="url" list="urls">
+        <datalist id="urls">
+            <option value="https://streams.spec.whatwg.org/">
+            <option value="https://html.spec.whatwg.org/">
+            <option value="http://www.angio.net/pi/digits/pi1000000.txt">
+            <option value="http://stuff.mit.edu/afs/sipb/contrib/pi/pi-billion.txt">
+            <!-- TODO more, especially ones with a Content-Length -->
+        </datalist>
+
+        <p>(Large pages will demonstrate better. We use a CORS proxy.)
+    </label>
+
+    <label>
+        Enter a string to search for (bytes displayed below)
+        <input type="text" id="string">
+        <output id="bytes" for="string"></output>
+    </label>
+
+    <input type="submit" value="Search!">
+
+    <fieldset id="output" hidden>
+        <progress id="progress"></progress>
+        <output id="progress-text"></output>
+    </fieldset>
+</form>
+
+<script>
+(function () {
+    'use strict';
+
+    // Polyfill until Canary updates
+    ReadableStreamReader.prototype.read2 = function () {
+        return this.ready.then(function () {
+            if (this.state === 'readable') {
+                return { value: this.read(), done: false };
+            } else {
+                return this.closed.then(function () {
+                    return { value: undefined, done: true };
+                });
+            }
+        }.bind(this));
+    };
+
+
+    const string = document.querySelector('#string');
+    const bytes = document.querySelector('#bytes');
+    const url = document.querySelector('#url');
+    const form = document.querySelector('#form');
+
+    const output = document.querySelector('#output');
+    const progress = document.querySelector('#progress');
+    const progressText = document.querySelector('#progress-text');
+
+    const encoder = new TextEncoder();
+
+    let bytesValue = new Uint8Array();
+    string.addEventListener('input', function () {
+        bytesValue = encoder.encode(string.value);
+
+        const bytesAsStrings = Array.prototype.map.call(bytesValue, function (b) { return `0x${b.toString(16)}`; });
+        bytes.value = Array.prototype.join.call(bytesAsStrings, ' ');
+    });
+
+    let soFar;
+    let contentLength;
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        output.removeAttribute('hidden');
+
+        progressText.textContent = 'Performing fetch...';
+
+        fetch(`https://cors-anywhere.herokuapp.com/${url.value}`).then(function (res) {
+            soFar = 0;
+            contentLength = res.headers.get('Content-Length');
+            progress.max = contentLength;
+
+            return pump(res.body.getReader());
+        })
+        .catch(function (e) {
+            progressText.textContent = e;
+        });
+    });
+
+    function pump(reader) {
+        return reader.read2().then(function (result) {
+            if (result.done) {
+                progressText.textContent = `All done! (${soFar} bytes total)`;
+                return;
+            }
+            console.log('chunk', result.value.byteLength);
+
+            soFar += result.value.byteLength;
+            updateProgress();
+
+            return pump(reader);
+        });
+    }
+
+    function updateProgress() {
+        progressText.textContent = contentLength ?
+            `${soFar}/${contentLength} bytes received` : `${soFar} bytes received`;
+        progress.value = contentLength ? soFar : null;
+    }
+}());
+</script>
