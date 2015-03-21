@@ -31,16 +31,11 @@
 
 <h1>Fetch + Streams Demo</h1>
 
-<p>This demo will search the first billion digits of PI for a substring you specify, and tell you the position at
-which it was found. It will do this without consuming a billion bytes of memory! That was impossible with XHR!
+<p>This demo will search the first billion digits of PI for a substring you specify, and tell you the position at which it was found. It will do this without consuming a billion bytes of memory! That was impossible with XHR!
 
-<p>Furthermore, it won't even need to do text decoding and string comparison, as it will operate on the bytes directly.
-(XHR's pseudo-streaming mode, with an ever-growing <code>responseText</code> you could poll, was text-only.)
+<p>Furthermore, it won't even need to do text decoding and string comparison, as it will operate on the bytes directly. (XHR's pseudo-streaming mode, with an ever-growing <code>responseText</code> you could poll, was text-only.)
 
-<p>Finally, once it finds the substring, it will cancel the stream, preventing further network usage! Canceling a fetch
-was not previously possible. (It is not yet possible to cancel before the headers arrive; see
-<a href="https://github.com/slightlyoff/ServiceWorker/issues/592">slightlyoff/ServiceWorker#592</a> and linked issues.)
-<small>Unfortunately our implementation has <a href="http://crbug.com/469154">a bug</a> where <code>reader.cancel()</code> does not work yet.</small>
+<p>Finally, once it finds the substring, it will cancel the stream, preventing further network usage! Canceling a fetch was not previously possible. (It is not yet possible to cancel before the headers arrive; see <a href="https://github.com/slightlyoff/ServiceWorker/issues/592">slightlyoff/ServiceWorker#592</a> and linked issues.) <small>Unfortunately our implementation has <a href="http://crbug.com/469154">a bug</a> where <code>reader.cancel()</code> does not work yet.</small>
 
 
 <form id="form">
@@ -61,8 +56,7 @@ was not previously possible. (It is not yet possible to cancel before the header
 <footer>
     <p><a href="https://github.com/domenic/streams-demo/blob/gh-pages/index.html">Source code on GitHub</a></p>
 
-    <p>Be sure to use <a href="https://www.google.com/chrome/browser/canary.html">Chrome Canary</a> and
-    <a href="chrome://flags/#enable-experimental-web-platform-features">enable experimental web platform features</a></p>
+    <p>Be sure to use <a href="https://www.google.com/chrome/browser/canary.html">Chrome Canary</a> and <a href="chrome://flags/#enable-experimental-web-platform-features">enable experimental web platform features</a></p>
 
     <a href="https://streams.spec.whatwg.org/"><img alt="Streams Logo" src="https://resources.whatwg.org/logo-streams.svg" height="30"></a>
 </footer>
