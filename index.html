@@ -71,20 +71,6 @@ was not previously possible. (It is not yet possible to cancel before the header
 (function () {
     'use strict';
 
-    // TODO: When Canary updates to include http://src.chromium.org/viewvc/blink?view=revision&revision=192220,
-    // remove this "polyfill" and replace usage of .read2() below with .read()
-    ReadableStreamReader.prototype.read2 = function () {
-        return this.ready.then(function () {
-            if (this.state === 'readable') {
-                return { value: this.read(), done: false };
-            } else {
-                return this.closed.then(function () {
-                    return { value: undefined, done: true };
-                });
-            }
-        }.bind(this));
-    };
-
     const PI_URL = 'http://stuff.mit.edu/afs/sipb/contrib/pi/pi-billion.txt';
 
     const substring = document.querySelector('#substring');
@@ -127,15 +113,13 @@ was not previously possible. (It is not yet possible to cancel before the header
     });
 
     function pump(reader) {
-        return reader.read2().then(function (result) {
+        return reader.read().then(function (result) {
             if (result.done) {
                 progressText.textContent = `All done! (${soFar} bytes total)`;
                 return;
             }
 
-            // TODO: when Canary updates to include http://src.chromium.org/viewvc/blink?view=revision&revision=192238,
-            // remove the `new Uint8Array`, since `result.value` will already be a Uint8Array.
-            const chunk = new Uint8Array(result.value);
+            const chunk = result.value;
 
             soFar += chunk.byteLength;
             updateProgress();
