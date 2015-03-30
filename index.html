@@ -36,7 +36,7 @@
 
 <p>Furthermore, it won't even need to do text decoding and string comparison, as it will operate on the bytes directly. (XHR's pseudo-streaming mode, with an ever-growing <code>responseText</code> you could poll, was text-only.)
 
-<p>Finally, once it finds the substring, it will cancel the stream, preventing further network usage! Canceling a fetch was not previously possible. (It is not yet possible to cancel before the headers arrive; see <a href="https://github.com/slightlyoff/ServiceWorker/issues/592">slightlyoff/ServiceWorker#592</a> and linked issues.) <small>Unfortunately our implementation has <a href="http://crbug.com/469154">a bug</a> where <code>reader.cancel()</code> does not work yet.</small>
+<p>Finally, once it finds the substring, it will cancel the stream, preventing further network usage! Canceling a fetch was not previously possible. (It is not yet possible to cancel before the headers arrive; see <a href="https://github.com/slightlyoff/ServiceWorker/issues/592">slightlyoff/ServiceWorker#592</a> and linked issues.)
 
 
 <form id="form">
@@ -139,9 +139,7 @@
             if (found !== -1) {
                 progressText.textContent = `Found it! At position ${soFar - chunk.byteLength + found}.`;
 
-                // crbug.com/469154 : argument to .cancel() should be optional
-                // crbug.com/469154 : .cancel() doesn't actually stop the network I/O
-                return reader.cancel('Found it, no more data needed!');
+                return reader.cancel();
             } else {
                 return pump(reader);
             }
